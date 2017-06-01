@@ -84,6 +84,8 @@ class EPollIOLoop(IOLoop):
                                 break
                             else:
                                 self.close(fd)
+                        except KeyError:
+                            break
                         try:
                             self.futures[fd].send(data)
                         except StopIteration:
@@ -114,8 +116,11 @@ class SelectIOLoop(IOLoop):
         import time
         while True:
             if self.read_fds:
-                readable, writeable, errors = self.impl(
-                    self.read_fds, self.write_fds, self.error_fds, 1)
+                try:
+                    readable, writeable, errors = self.impl(
+                        self.read_fds, self.write_fds, self.error_fds, 1)
+                except Exception:
+                    continue
                 events = {}
                 for fd in readable:
                     events[fd] = events.get(fd, 0) | self.READ
@@ -131,6 +136,8 @@ class SelectIOLoop(IOLoop):
                                     break
                                 else:
                                     self.close(fd)
+                            except KeyError:
+                                break
                             try:
                                 self.futures[fd].send(data)
                             except StopIteration:
